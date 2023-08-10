@@ -2,6 +2,8 @@
 
 import math
 import fractions
+import sys
+import heapq
 
 
 class Symnomial:
@@ -71,7 +73,7 @@ def symmetric(bitmap, n):  # len must be n + 1
     return Symnomial(coef_arr, n)
 
 
-def find_best_C(max_n):
+def find_best_C_until(max_n):
     best_C = 0
     best_sym = 0
     best_bitmap = []
@@ -91,21 +93,46 @@ def find_best_C(max_n):
                 best_C = sym.C()
                 best_sym = sym
                 best_bitmap = bitmap
-    print(best_bitmap)
+    print("Best bitmap is", best_bitmap)
     best_sym.sym_report_full()
 
 
-print("best C n <= 10")
-find_best_C(10)
+def find_top_k_Cs(n, k=1):
+    c_table = []
+    for i in range(2 ** n):   # need only iterate up to here, due to symmetry
+        x_str = ('{0:b}'.format(i).rjust((n + 1), '0'))
+        bitmap = []
+        for b in x_str:
+            if b == '1':
+                bitmap.append(-1)
+            else:
+                bitmap.append(1)
+        sym = symmetric(bitmap, n)
+        assert sym.weight() == 1
+        c_table.append((sym.C(), sym, bitmap))
+    print(f"The top {k} bitmaps are as follows:")
+    top_k = heapq.nlargest(k, c_table, key = lambda tup: tup[0])
+    for (c,s,b) in top_k:
+        print(f"Bitmap {b} leads to C = {c}")
+        s.sym_report_abrv()
+        print("")
 
 
-n = 20
-print("\n\nC of AND with n = " + str(n))
-bmap = []
-for i in range(n):
-    bmap.append(1)
-bmap.append(-1)
-# bmap = [-1, 1, 1, 1, -1, 1, -1, 1, 1, -1, 1]
+if __name__ == "__main__":
+    n = int(sys.argv[1]) if len(sys.argv) > 1 else 10
+    k = int(sys.argv[2]) if len(sys.argv) > 2 else 5
+    # print("best C with n <= " + str_n)
+    # find_best_C_until(int(str_n))
+    print(f"Studying symmetric boolean functions on {n} variables")
+    find_top_k_Cs(n, k)
 
-sym = symmetric(bmap, n)
-sym.sym_report_full()
+###     n = 20
+###     print("\n\nC of AND with n = " + str(n))
+###     bmap = []
+###     for i in range(n):
+###         bmap.append(1)
+###     bmap.append(-1)
+###     # bmap = [-1, 1, 1, 1, -1, 1, -1, 1, 1, -1, 1]
+### 
+###     sym = symmetric(bmap, n)
+###     sym.sym_report_full()
