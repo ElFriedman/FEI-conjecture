@@ -78,7 +78,7 @@ def find_best_C_until(max_n):
     best_sym = 0
     best_bitmap = []
     for n in range(1, max_n + 1):
-        for i in range(2 ** (n + 1)):
+        for i in range(2 ** n):
             x_str = ('{0:b}'.format(i).rjust((n + 1), '0'))
             bitmap = []
             for b in x_str:
