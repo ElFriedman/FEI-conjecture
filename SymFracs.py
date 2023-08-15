@@ -73,6 +73,10 @@ def symmetric(bitmap, n):  # len must be n + 1
     return Symnomial(coef_arr, n)
 
 
+def show_bitmap(bs):
+    return " ".join(["-" if b < 0 else "+" for b in bs])
+
+
 def find_best_C_until(max_n):
     best_C = 0
     best_sym = 0
@@ -112,8 +116,8 @@ def find_top_k_Cs(n, k=1):
         c_table.append((sym.C(), sym, bitmap))
     print(f"The top {k} bitmaps are as follows:")
     top_k = heapq.nlargest(k, c_table, key = lambda tup: tup[0])
-    for (c,s,b) in top_k:
-        print(f"Bitmap {b} leads to C = {c}")
+    for (i, (c,s,b)) in enumerate(top_k):
+        print(f"Rank {i}: bitmap {show_bitmap(b)} leads to C = {c}")
         s.sym_report_abrv()
         print("")
 
