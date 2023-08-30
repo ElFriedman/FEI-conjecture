@@ -60,16 +60,30 @@ class Symnomial:
         print("C: " + str(self.C()))
 
 
+def kravchuk(m, x, n):
+    """
+    return evaluation of Kravchuk polynomial $K_m(x; n)$ for integer x.
+    """
+    return sum([(-1)**j * math.comb(x, j) * math.comb(n-x, m-j) for j in range(m+1)])
+
+
 def symmetric(bitmap, n):  # len must be n + 1
     coef_arr = []
-    for s in range(0, n + 1):  # size of subset S
-        coef = 0
-        for k in range(0, n + 1):  # level within sum
-            sum_k = 0
-            for j in range(0, k + 1):  # count of negative terms chosen
-                sum_k += ((-1) ** j) * math.comb(n - s, k - j) * math.comb(s, j)
-            coef += sum_k * bitmap[k]
-        coef_arr.append(fractions.Fraction(int(coef), 2 ** n))
+    for s in range(0, n + 1):  # compute Fourier coeff at subsets S of size s
+        numerator = sum([kravchuk(m, s, n) * bitmap[m] for m in range(n+1)])
+        coef_arr.append(fractions.Fraction(int(numerator), 2 ** n))
+    return Symnomial(coef_arr, n)
+
+
+def monotone_symmetric(thresh, n):
+    coef_arr = []
+    # compute the level-0 Fourier coeff
+    numerator = sum([math.comb(n, m) for m in range(thresh)])
+    coef_arr.append(fractions.Fraction(int(numerator), 2 ** (n - 1)) - 1)
+    # compute the rest of the Fourier coeffs, using Kravchuk sum identity
+    for s in range(1, n + 1):
+        numerator = kravchuk(thresh - 1, s - 1, n - 1)
+        coef_arr.append(fractions.Fraction(int(numerator), 2 ** (n - 1)))
     return Symnomial(coef_arr, n)
 
 
@@ -83,16 +97,10 @@ def find_best_C_until(max_n):
     best_bitmap = []
     for n in range(1, max_n + 1):
         for i in range(2 ** n):
-            x_str = ('{0:b}'.format(i).rjust((n + 1), '0'))
-            bitmap = []
-            for b in x_str:
-                if b == '1':
-                    bitmap.append(-1)
-                else:
-                    bitmap.append(1)
+            x_str = ('{0:b}'.format(i).rjust((n + 1), '0'))   # Use binary repr of i as "bitmap"
+            bitmap = [-1 if b == '1' else 1 for b in x_str]   # Convert from "0/1" to "±1" notation
             sym = symmetric(bitmap, n)
-            if sym.weight() != 1:
-                print("Error: weight not equal to 1")
+            assert sym.weight() == 1
             if sym.C() > best_C:
                 best_C = sym.C()
                 best_sym = sym
@@ -104,13 +112,8 @@ def find_best_C_until(max_n):
 def find_top_k_Cs(n, k=1):
     c_table = []
     for i in range(2 ** n):   # need only iterate up to here, due to symmetry
-        x_str = ('{0:b}'.format(i).rjust((n + 1), '0'))
-        bitmap = []
-        for b in x_str:
-            if b == '1':
-                bitmap.append(-1)
-            else:
-                bitmap.append(1)
+        x_str = ('{0:b}'.format(i).rjust((n + 1), '0'))   # Use binary repr of i as "bitmap"
+        bitmap = [-1 if b == '1' else 1 for b in x_str]   # Convert from "0/1" to "±1" notation
         sym = symmetric(bitmap, n)
         assert sym.weight() == 1
         c_table.append((sym.C(), sym, bitmap))
@@ -129,14 +132,3 @@ if __name__ == "__main__":
     # find_best_C_until(int(str_n))
     print(f"Studying symmetric boolean functions on {n} variables")
     find_top_k_Cs(n, k)
-
-###     n = 20
-###     print("\n\nC of AND with n = " + str(n))
-###     bmap = []
-###     for i in range(n):
-###         bmap.append(1)
-###     bmap.append(-1)
-###     # bmap = [-1, 1, 1, 1, -1, 1, -1, 1, 1, -1, 1]
-### 
-###     sym = symmetric(bmap, n)
-###     sym.sym_report_full()
