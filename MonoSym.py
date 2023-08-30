@@ -5,7 +5,7 @@ import heapq
 import matplotlib.pyplot as plt
 
 
-def make_C_table(n):
+def make_C_table(n, shortcut=False):
     """
     Study monotone symmetric Boolean functions on n variables. Each such function
     is characterized by a single "threshold parameter" w, the Hamming weight at 
@@ -15,20 +15,23 @@ def make_C_table(n):
     """
     c_table = []
     for w in range(0, (n+2)//2):   # we can ignore the rest, by symmetry
-        bitmap = [1] * w + [-1] * (n+1-w)
-        sym = SymFracs.symmetric(bitmap, n)
+        if shortcut:
+            sym = SymFracs.monotone_symmetric(w, n)
+        else:
+            bitmap = [1] * w + [-1] * (n+1-w)
+            sym = SymFracs.symmetric(bitmap, n)
         assert sym.weight() == 1
         c_table.append((sym.C(), sym, w))
     return c_table
 
 
-def find_top_k_Cs(n, k=1):
+def find_top_k_Cs(n, k=1, shortcut=False):
     """
     Among monotone symmetric functions on n variables, find the top k c-values
     and print basic info about the corresponding functions.
     """
     print(f"The top {k} bitmaps are as follows:")
-    top_k = heapq.nlargest(k, make_C_table(n), key = lambda tup: tup[0])
+    top_k = heapq.nlargest(k, make_C_table(n, shortcut), key = lambda tup: tup[0])
     for (i, (c,s,w)) in enumerate(top_k):
         print(f"Rank {i}: threshold {w} leads to C = {c}")
         s.sym_report_abrv()
@@ -88,7 +91,7 @@ if __name__ == "__main__":
     values to how C changes as we increase w, with n being very large.
     """
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 100
-    wcs = [(w,c) for (c,s,w) in make_C_table(n)[1:]]
+    wcs = [(w,c) for (c,s,w) in make_C_table(n, shortcut=True)[1:]]
     print("\n".join([f"{w} {c}" for (w,c) in wcs]))
     ws, cs = zip(*wcs)
     plt.plot(ws, cs)
